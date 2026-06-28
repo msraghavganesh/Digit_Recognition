@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VP's Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:     #E01E2C;
+    --red-dim: rgba(224,30,44,0.15);
+    --navy:    #05101F;
+    --glass-bg: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.09);
+    --glass-hover: rgba(255,255,255,0.08);
+    --text-primary: #F0EEE9;
+    --text-muted: rgba(240,238,233,0.45);
+    --glow-red: rgba(224,30,44,0.25);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--navy);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Animated background ── */
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(224,30,44,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 75%, rgba(10,30,70,0.6) 0%, transparent 65%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, #05101F 0%, #020C18 100%);
+  }
+
+  /* subtle animated orb */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.18;
+    animation: drift 18s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width: 500px; height: 500px; background: #E01E2C; top: -120px; left: -100px; animation-delay: 0s; }
+  .orb-2 { width: 350px; height: 350px; background: #1a3a7a; bottom: -80px; right: -60px; animation-delay: -9s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%       { transform: translate(40px, 30px) scale(1.05); }
+    66%       { transform: translate(-20px, 50px) scale(0.97); }
+  }
+
+  /* ── Grid noise texture overlay ── */
+  .noise {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 180px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* ── Layout ── */
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 72px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 18px;
+    opacity: 0.9;
+  }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+
+  .title span {
+    color: var(--red);
+  }
+
+  .subtitle {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--red);
+    margin: 32px auto;
+    opacity: 0.6;
+  }
+
+  /* ── Category sections ── */
+  .sections {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    padding-left: 4px;
+  }
+
+  /* ── Glass card grid ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 26px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: background 0.25s, border-color 0.25s, transform 0.25s;
+    min-height: 110px;
+  }
+
+  /* featured card — larger */
+  .card.featured {
+    grid-column: span 2;
+    min-height: 130px;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 0% 0%, var(--glow-red) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+
+  .card:hover {
+    background: var(--glass-hover);
+    border-color: rgba(224,30,44,0.35);
+    transform: translateY(-3px);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .card-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .card-icon {
+    font-size: 18px;
+    opacity: 0.5;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .card-desc {
+    font-size: 12.5px;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 16px;
+  }
+
+  .card-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--red);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .card:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 80px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+  }
+
+  /* ── Entrance animation ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .header        { animation: fadeUp 0.7s ease both; }
+  .sections      { animation: fadeUp 0.7s 0.15s ease both; }
+
+  @media (max-width: 600px) {
+    .card.featured { grid-column: span 1; }
+    .title { font-size: 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb { animation: none; }
+    .card { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="noise"></div>
+
+<div class="page">
+
+  <header class="header">
+    <p class="eyebrow">ExxonMobil · CSE</p>
+    <h1 class="title">VP's<br><span>Brain</span></h1>
+    <p class="subtitle">Everything in one place — crisp, fast, no noise.</p>
+    <div class="divider"></div>
+  </header>
+
+  <div class="sections">
+
+    <!-- SECTION: Dashboards -->
+    <div>
+      <p class="section-label">Dashboards</p>
+      <div class="card-grid">
+        <a href="#" class="card featured">
+          <div>
+            <div class="card-top">
+              <span class="card-name">Cost & Schedule Overview</span>
+              <span class="card-icon">📊</span>
+            </div>
+            <p class="card-desc">Weekly rollup of project cost and schedule performance across all active portfolios.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">MAGNET Tracker</span>
+              <span class="card-icon">⚡</span>
+            </div>
+            <p class="card-desc">ML labor automation performance and adoption metrics.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">Offshore CET</span>
+              <span class="card-icon">🛢</span>
+            </div>
+            <p class="card-desc">Consolidated offshore cost estimating tool metrics.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- SECTION: Tools & Platforms -->
+    <div>
+      <p class="section-label">Tools & Platforms</p>
+      <div class="card-grid">
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">C-PIE</span>
+              <span class="card-icon">🔬</span>
+            </div>
+            <p class="card-desc">Cross-functional enterprise estimating platform evaluation.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">CPMTechnology</span>
+              <span class="card-icon">🏗</span>
+            </div>
+            <p class="card-desc">SharePoint-based technology governance framework for CPM org.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">Middle East Cost Survey</span>
+              <span class="card-icon">🌍</span>
+            </div>
+            <p class="card-desc">Regional benchmarking and labor cost survey data.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- SECTION: References -->
+    <div>
+      <p class="section-label">References & Reports</p>
+      <div class="card-grid">
+        <a href="#" class="card featured">
+          <div>
+            <div class="card-top">
+              <span class="card-name">OneNote — CSE Planning</span>
+              <span class="card-icon">📓</span>
+            </div>
+            <p class="card-desc">Central notes, meeting logs, and working documents for the CSE Planning Advisor function.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+        <a href="#" class="card">
+          <div>
+            <div class="card-top">
+              <span class="card-name">PDS Review</span>
+              <span class="card-icon">📋</span>
+            </div>
+            <p class="card-desc">Performance Development Summary and calibration docs.</p>
+          </div>
+          <span class="card-arrow">Open →</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">ExxonMobil Confidential &nbsp;·&nbsp; CSE · CPM</footer>
+
+</div>
+
+</body>
+</html>
